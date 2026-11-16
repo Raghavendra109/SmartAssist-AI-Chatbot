@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartAssist AI Chatbot</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #080d1e, #101b38, #171044);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Background animation */
+        body::before {
+            content: "";
+            position: fixed;
+            width: 450px;
+            height: 450px;
+            background: #2563eb;
+            filter: blur(160px);
+            opacity: 0.25;
+            top: -150px;
+            left: -100px;
+            animation: float 8s infinite alternate ease-in-out;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: #9333ea;
+            filter: blur(160px);
+            opacity: 0.2;
+            bottom: -150px;
+            right: -100px;
+            animation: float 10s infinite alternate-reverse ease-in-out;
+        }
+
+        @keyframes float {
+            from { transform: translate(0, 0); }
+            to { transform: translate(100px, 60px); }
+        }
+
+        .chat-container {
+            position: relative;
+            z-index: 1;
+            width: 440px;
+            height: 650px;
+            background: rgba(17, 25, 48, 0.92);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 22px;
+            box-shadow: 0 0 40px rgba(37,99,235,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: appear 0.8s ease;
+            backdrop-filter: blur(15px);
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Header */
+        .chat-header {
+            padding: 22px;
+            text-align: center;
+            background: linear-gradient(120deg, #2563eb, #7c3aed);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            font-size: 25px;
+            letter-spacing: 1px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px white; }
+            to { text-shadow: 0 0 18px #bfdbfe; }
+        }
+
+        .chat-header p {
+            margin: 8px 0 0;
+            font-size: 13px;
+            color: #e0e7ff;
+        }
+
+        .status {
+            font-size: 11px;
+            margin-top: 10px;
+            color: #d1fae5;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.3; }
+        }
+
+        /* Chat area */
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            margin: 13px 0;
+            border-radius: 15px;
+            max-width: 85%;
+            line-height: 1.6;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            animation: messageIn 0.35s ease;
+        }
+
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot {
+            background: #202d4a;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            border-bottom-left-radius: 4px;
+        }
+
+        .user {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 3px 12px rgba(37,99,235,0.2);
+        }
+
+        /* Typing animation */
+        .typing {
+            display: flex;
+            gap: 5px;
+            width: fit-content;
+            align-items: center;
+        }
+
+        .typing span {
+            width: 7px;
+            height: 7px;
+            background: #60a5fa;
+            border-radius: 50%;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            to { transform: translateY(-7px); opacity: 0.5; }
+        }
+
+        /* Input area */
+        .input-area {
+            display: flex;
+            padding: 15px;
+            background: #111a30;
+            border-top: 1px solid #334155;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 16px;
+            background: #202d4a;
+            color: white;
+            border: 1px solid #475569;
+            border-radius: 12px;
+            outline: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+        }
+
+        input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 12px rgba(37,99,235,0.3);
+        }
+
+        button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 18px rgba(96,165,250,0.5);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 8px;
+            font-size: 10px;
+            color: #64748b;
+            background: #111a30;
+        }
+
+        @media (max-width: 500px) {
+            body {
+                padding: 10px;
+            }
+
+            .chat-container {
+                width: 100%;
+                height: 90vh;
+                height: 90dvh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="chat-container">
+
+    <div class="chat-header">
+        <h2>✦ SmartAssist AI</h2>
+        <p>Your Intelligent Knowledge Assistant</p>
+
+        <div class="status">
+            <span class="status-dot"></span>
+            Online • Ready to assist
+        </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="message bot">
+            Hello! 👋 Welcome to SmartAssist AI.
+
+            Ask me anything about programming, technology, cloud computing and more!
+        </div>
+    </div>
+
+    <div class="input-area">
+        <input
+            type="text"
+            id="userInput"
+            placeholder="Ask me anything..."
+            autocomplete="off"
+        >
+
+        <button id="sendButton" onclick="sendMessage()">Send ➤</button>
+    </div>
+
+    <div class="footer">
+        Powered by SmartAssist • Intelligent Knowledge Assistant
+    </div>
+
+</div>
+
+<script>
+    async function sendMessage() {
+
+        const input = document.getElementById("userInput");
+        const chatBox = document.getElementById("chatBox");
+        const button = document.getElementById("sendButton");
+
+        const message = input.value.trim();
+
+        if (message === "" || button.disabled) return;
+
+        // Display user message
+        const userMessage = document.createElement("div");
+        userMessage.className = "message user";
+        userMessage.textContent = message;
+
+        chatBox.appendChild(userMessage);
+
+        input.value = "";
+        button.disabled = true;
+
+        // Show typing animation
+        const typing = document.createElement("div");
+        typing.className = "message bot typing";
+        typing.innerHTML = "<span></span><span></span><span></span>";
+
+        chatBox.appendChild(typing);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+
+            const response = await fetch("/get_response", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            if (!response.ok) {
+                throw new Error("Server error: " + response.status);
+            }
+
+            const data = await response.json();
+
+            // Remove typing animation
+            typing.remove();
+
+            // Create bot message
+            const botMessage = document.createElement("div");
+            botMessage.className = "message bot";
+            chatBox.appendChild(botMessage);
+
+            // Word-by-word animation
+            const answer = data.reply || "Sorry, I couldn't find an answer.";
+            const words = answer.split(" ");
+
+            botMessage.textContent = "";
+
+            for (let i = 0; i < words.length; i++) {
+
+                botMessage.textContent += (i === 0 ? "" : " ") + words[i];
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                await new Promise(resolve => setTimeout(resolve, 70));
+            }
+
+        } catch (error) {
+
+            typing.remove();
+
+            const botMessage = document.createElement("div");
+            botMessage.className = "message bot";
+            botMessage.textContent = "Sorry! Something went wrong. Please try again.";
+
+            chatBox.appendChild(botMessage);
+
+            console.error("Chatbot Error:", error);
+
+        } finally {
+
+            button.disabled = false;
+            input.focus();
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+        }
+    }
+
+    // Send message using Enter key
+    document.getElementById("userInput").addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    });
+</script>
+</body>
